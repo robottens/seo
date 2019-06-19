@@ -16,33 +16,33 @@ import {
 } from '../helpers';
 
 export default class KeywordChecklist {
-	
+
 	// Variables
 	// =========================================================================
-	
+
 	keyword = null;
 	keywordLower = null;
 	ratings = [];
 	ratingOccurrence = {};
-	
+
 	content = null;
 	text = null;
 	stats = null;
-	
+
 	// KeywordChecklist
 	// =========================================================================
-	
+
 	constructor (namespace, SEO) {
 		this.namespace = namespace;
 		this.SEO = SEO;
-		
+
 		this.bar = document.getElementById(`${namespace}KeywordBar`);
 		this.checklist = document.getElementById(`${namespace}KeywordChecklist`);
 	}
-	
+
 	// Actions
 	// =========================================================================
-	
+
 	/**
 	 * Calculates the checklist ratings for the given keyword
 	 *
@@ -54,30 +54,30 @@ export default class KeywordChecklist {
 			this.ratings = [];
 			this.keyword = keyword;
 			this.keywordLower = keyword.toLowerCase();
-			
+
 			// Remove line breaks, tabs, and surplus spaces from page text
 			this.text = content.textContent.replace(
 				/(\r\n|\r|\n|\t+)/gmi,
 				''
 			);
-			
+
 			// If there's no text, complain
 			if (this.text.trim() === "") {
 				this.addRating(
 					SEO_RATING.POOR,
 					SEO_REASONS.noContent
 				);
-				
+
 				// Re-render the checklist
 				this.renderChecklist();
-				
+
 				onNewRating(SEO_RATING.POOR);
 				return;
 			}
-			
+
 			this.content = content;
 			this.stats = new TextStatistics(this.text);
-			
+
 			// Run all `judge` functions
 			Object.getOwnPropertyNames(KeywordChecklist.prototype)
 			      .filter(f => f.indexOf('judge') > -1)
@@ -90,7 +90,7 @@ export default class KeywordChecklist {
 				average: 0,
 				good: 0,
 			};
-			
+
 			this.ratings.sort((a, b) => {
 				return (
 					KeywordChecklist.ratingValue(b.rating)
@@ -99,10 +99,10 @@ export default class KeywordChecklist {
 			}).forEach(({ rating }) => {
 				if (!this.ratingOccurrence.hasOwnProperty(rating))
 					this.ratingOccurrence[rating] = 0;
-				
+
 				this.ratingOccurrence[rating]++;
 			});
-			
+
 			// Find the most prevalent rating
 			const ratingSum =
 				Object.values(this.ratingOccurrence).reduce((a, b) => a + b, 0);
@@ -126,10 +126,10 @@ export default class KeywordChecklist {
 				this.ratingOccurrence.average + this.ratingOccurrence.poor > ratingSum / 2
 			)
 				overallRating = 'average';
-			
+
 			// Re-render the checklist
 			this.renderChecklist();
-			
+
 			// Run the callback
 			onNewRating(overallRating);
 		}).catch(err => {
@@ -139,7 +139,7 @@ export default class KeywordChecklist {
 			// Note to self: This also catches JS errors
 		});
 	}
-	
+
 	/**
 	 * Clears the checklist
 	 */
@@ -150,20 +150,20 @@ export default class KeywordChecklist {
 			const fill = this.bar.children[i];
 			fill.style.transform = "";
 		}
-		
+
 		// Clear checklist
 		while (this.checklist.firstElementChild)
 			this.checklist.removeChild(this.checklist.firstElementChild);
-		
+
 		const empty = document.createElement("li");
 		empty.style.textAlign = "center";
 		empty.textContent = "No keyword selected";
-		
+
 		this.checklist.appendChild(empty);
-		
+
 		onEmptyRating();
 	}
-	
+
 	/**
 	 * Renders the checklist & bar
 	 */
@@ -174,33 +174,33 @@ export default class KeywordChecklist {
 		for (let i = 0; i < this.bar.children.length; i++) {
 			let fill = this.bar.children[i];
 			let rating = fill.className;
-			
+
 			fill.style.transform = `translateX(${currentFillSize}%)`;
-			
+
 			if (this.ratingOccurrence.hasOwnProperty(rating)) {
 				currentFillSize +=
 					(this.ratingOccurrence[rating] / ratingCount) * 100;
 			}
 		}
-		
+
 		// Re-render checklist
 		while (this.checklist.firstElementChild)
 			this.checklist.removeChild(this.checklist.firstElementChild);
-		
+
 		this.ratings.forEach(rating => {
 			this.checklist.appendChild(this.renderChecklistItem(rating));
 		});
 	}
-	
+
 	// Calculations
 	// =========================================================================
-	
+
 	/**
 	 * Judge the length of the title
 	 */
 	judgeTitleLength () {
 		const l = this.SEO.snippetFields.title.textContent.trim().length;
-		
+
 		this.addRating(
 			l < 40 || l > 60 ? SEO_RATING.POOR : SEO_RATING.GOOD,
 			l < 40
@@ -210,14 +210,14 @@ export default class KeywordChecklist {
 					: SEO_REASONS.titleLengthSuccess
 		);
 	}
-	
+
 	/**
 	 * Judge the positioning of the keyword in the title
 	 */
 	judgeTitleKeyword () {
 		const title = this.SEO.snippetFields.title.textContent.trim();
 		const index = title.toLowerCase().indexOf(this.keywordLower);
-		
+
 		if (index > -1) {
 			if (index <= title.length * 0.3) {
 				this.addRating(
@@ -226,30 +226,30 @@ export default class KeywordChecklist {
 				);
 				return;
 			}
-			
+
 			this.addRating(
 				SEO_RATING.AVERAGE,
 				SEO_REASONS.titleKeywordPosFail
 			);
 			return;
 		}
-		
+
 		this.addRating(
 			SEO_RATING.POOR,
 			SEO_REASONS.titleKeywordFail
 		);
 	}
-	
+
 	/**
 	 * Judge the keyword in the slug
 	 */
 	judgeSlug () {
 		if (!this.SEO.snippetFields.slug)
 			return;
-		
-		const slug = this.SEO.snippetFields.slug.textContent.toLowerCase();
-		const keyword = this.keywordLower.replace(/[^a-zA-Z0-9-_]/g, '');
-		
+
+		const slug = this.SEO.snippetFields.slug.textContent.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+		const keyword = this.keywordLower.replace(/[^a-zA-Z0-9]/g, '');
+
 		if (slug.indexOf(keyword) > -1) {
 			this.addRating(
 				SEO_RATING.GOOD,
@@ -257,13 +257,13 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		this.addRating(
 			SEO_RATING.POOR,
 			SEO_REASONS.slugFail
 		);
 	}
-	
+
 	/**
 	 * Judge the location of the keyword in the description
 	 *
@@ -271,7 +271,7 @@ export default class KeywordChecklist {
 	 */
 	judgeDesc () {
 		const desc = this.SEO.snippetFields.desc.value.toLowerCase();
-		
+
 		if (desc.indexOf(this.keywordLower) > -1) {
 			this.addRating(
 				SEO_RATING.GOOD,
@@ -279,19 +279,19 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		this.addRating(
 			SEO_RATING.POOR,
 			SEO_REASONS.descFail
 		);
 	}
-	
+
 	/**
 	 * Judge the number of words
 	 */
 	judgeWordCount () {
 		const count = this.stats.wordCount();
-		
+
 		if (count > 300) {
 			this.addRating(
 				SEO_RATING.GOOD,
@@ -299,19 +299,19 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		this.addRating(
 			SEO_RATING.POOR,
 			SEO_REASONS.wordCountFail.replace('{l}', count)
 		);
 	}
-	
+
 	/**
 	 * Judge keyword in first paragraph
 	 */
 	judgeFirstParagraph () {
 		const p = this.content.querySelector('p');
-		
+
 		if (p && p.textContent.toLowerCase().indexOf(this.keywordLower) > -1) {
 			this.addRating(
 				SEO_RATING.GOOD,
@@ -319,13 +319,13 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		this.addRating(
 			SEO_RATING.POOR,
 			SEO_REASONS.firstParagraphFail
 		);
 	}
-	
+
 	/**
 	 * Judge the number of images with the keyword in their alts
 	 *
@@ -333,18 +333,18 @@ export default class KeywordChecklist {
 	 */
 	judgeImages () {
 		const imgs = this.content.getElementsByTagName('img');
-		
+
 		if (!imgs.length) return;
-		
+
 		let withKeywordAlt = 0,
 			i = imgs.length;
-		
+
 		while (i--) {
 			let alt = imgs[i].getAttribute('alt');
 			if (alt && alt.toLowerCase().indexOf(this.keywordLower) > -1)
 				withKeywordAlt++;
 		}
-		
+
 		if (withKeywordAlt >= imgs.length * 0.8) {
 			this.addRating(
 				SEO_RATING.GOOD,
@@ -352,7 +352,7 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		if (withKeywordAlt >= imgs.length * 0.5) {
 			this.addRating(
 				SEO_RATING.AVERAGE,
@@ -360,13 +360,13 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		this.addRating(
 			SEO_RATING.POOR,
 			SEO_REASONS.imagesFail
 		);
 	}
-	
+
 	/**
 	 * Judge whether the content contains external links
 	 *
@@ -374,9 +374,9 @@ export default class KeywordChecklist {
 	 */
 	judgeLinks () {
 		const a = this.content.getElementsByTagName('a');
-		
+
 		if (!a.length) return;
-		
+
 		for (let i = 0; i < a.length; i++) if (isExternalUrl(a[i].href)) {
 			this.addRating(
 				SEO_RATING.GOOD,
@@ -384,35 +384,35 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		this.addRating(
 			SEO_RATING.POOR,
 			SEO_REASONS.linksFail
 		);
 	}
-	
+
 	/**
 	 * Judge the number of headings (and their level) that contain the keyword
 	 */
 	judgeHeadings () {
 		const headings = this.content.querySelectorAll('h1, h2, h3, h4, h5, h6');
-		
+
 		if (!headings.length) return;
-		
+
 		let primary = 0,
 			secondary = 0,
 			i = headings.length;
-		
+
 		while (i--) {
 			let h = headings[i];
-			
+
 			if (h.textContent.toLowerCase().indexOf(this.keywordLower) === -1)
 				continue;
-			
+
 			if (['h1', 'h2'].indexOf(h.nodeName.toLowerCase()) > -1) primary++;
 			else secondary++;
 		}
-		
+
 		if (primary > 0) {
 			this.addRating(
 				SEO_RATING.GOOD,
@@ -420,7 +420,7 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		if (secondary > 0) {
 			this.addRating(
 				SEO_RATING.AVERAGE,
@@ -428,13 +428,13 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		this.addRating(
 			SEO_RATING.POOR,
 			SEO_REASONS.headingsFail
 		);
 	}
-	
+
 	/**
 	 * Judge the density of the keyword within the content
 	 */
@@ -443,18 +443,18 @@ export default class KeywordChecklist {
 			, keyword = ~~this.keywordLower.indexOf(' ')
 				? this.keywordLower.split(' ')
 				: this.keywordLower;
-		
+
 		const keyCount = countInArray(words, keyword)
 			, reduceWordCount = Array.isArray(keyword) ? keyword.length : 0;
-		
+
 		const wordsLength = words.length - reduceWordCount;
-		
+
 		const keyPercent = +(
 			100 + (
 				(keyCount - wordsLength) / wordsLength
 			) * 100
 		).toFixed(2);
-		
+
 		if (keyPercent < 1.0) {
 			this.addRating(
 				SEO_RATING.POOR,
@@ -462,7 +462,7 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		if (keyPercent <= 2.5) {
 			this.addRating(
 				SEO_RATING.GOOD,
@@ -470,7 +470,7 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		if (keyPercent > 2.5) {
 			this.addRating(
 				SEO_RATING.AVERAGE,
@@ -480,19 +480,19 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		this.addRating(
 			SEO_RATING.POOR,
 			SEO_REASONS.densityFail
 		);
 	}
-	
+
 	/**
 	 * Judges the Flesch-Kincaid reading ease
 	 */
 	judgeFleschEase () {
 		const level = this.stats.fleschKincaidReadingEase();
-		
+
 		if (level >= 80) {
 			this.addRating(
 				SEO_RATING.GOOD,
@@ -500,7 +500,7 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		if (level >= 60) {
 			this.addRating(
 				SEO_RATING.AVERAGE,
@@ -508,17 +508,17 @@ export default class KeywordChecklist {
 			);
 			return;
 		}
-		
+
 		this.addRating(
 			SEO_RATING.POOR,
 			SEO_REASONS.fleschFail.replace('{l}', level)
 		);
 		return;
 	}
-	
+
 	// Helpers
 	// =========================================================================
-	
+
 	/**
 	 * Converts the SEO Rating to a number (for sorting)
 	 *
@@ -537,7 +537,7 @@ export default class KeywordChecklist {
 				return 0;
 		}
 	}
-	
+
 	/**
 	 * Adds a rating
 	 *
@@ -547,7 +547,7 @@ export default class KeywordChecklist {
 	addRating (rating, reason) {
 		this.ratings.push({ rating, reason });
 	}
-	
+
 	/**
 	 * Renders a checklist item
 	 *
@@ -561,6 +561,5 @@ export default class KeywordChecklist {
 			c('p', {}, reason)
 		]);
 	};
-	
-}
 
+}
