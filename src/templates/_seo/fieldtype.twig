@@ -76,9 +76,6 @@
 			{{ "Social"|t }}
 		</a>
 		{% endif %}
-		<a href="#" data-seo-tab="advanced">
-			{{ "Advanced"|t }}
-		</a>
 	</nav>
 
 	<div id="{{ id }}Pages">
@@ -247,44 +244,6 @@
 				</svg>
 			{% endset %}
 			{{ _.social(id, name, value, "Facebook", "facebook", socialPreviewUrl, facebookIcon) }}
-		</div>
-
-		<div class="seo--tab" data-seo-tab="advanced">
-
-			{# Ahh! Robots! #}
-			<div class="seo--label">
-				<div>
-					<em>Robots</em>
-					Control how this page is indexed by crawlers (some of these
-					are Google specific). If this element as an expiry date the
-					<code>unavailable_after</code> directive will be set
-					automatically.
-				</div>
-			</div>
-
-			{% include 'seo/_seo/robots' with {
-				robots: isNew ? defaultRobots : value.advanced.robots,
-				name: name ~ "[advanced][robots]"
-			} %}
-
-			{# Canonical #}
-			<div class="seo--label">
-				<label for="{{ id }}Canonical">
-					<em>Canonical</em>
-					If this is not the canonical version of this page, add the
-					canonical URL here. The current URL of the page will be used
-					if this is left blank.
-				</label>
-			</div>
-
-			{{ _forms.text({
-				id: id ~ 'Canonical',
-				name: name ~ '[advanced][canonical]',
-				value: value.advanced.canonical,
-				type: 'url',
-				placeholder: 'This must be a valid, absolute URL. i.e. https://mysite.com'
-			}) }}
-
 		</div>
 	</div>
 </div>
