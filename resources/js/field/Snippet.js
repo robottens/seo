@@ -21,6 +21,7 @@ export default class Snippet {
 	_observedInputs = [];
 
 	constructor (namespace, SEO) {
+		// console.log("constructer");
 		this.namespace = namespace;
 		this.SEO = SEO;
 
@@ -28,29 +29,28 @@ export default class Snippet {
 		this.seoFields = document.querySelectorAll('div[data-type*="SeoField"]');
 		this.seoFieldCount = this.seoFields.length;
 
-		this.titleField = document.getElementById(`${namespace}Title`);
-		this.slugField  = document.getElementById(`${namespace}Slug`);
-		this.descField  = document.getElementById(`${namespace}Description`);
-		
+		this.titleField = document.getElementById("title");
+		this.slugField  = document.getElementById("slug");
+
 		this.SEO.snippetFields = {
 			title: this.titleField,
 			slug:  this.slugField,
-			desc:  this.descField,
 		};
-		
-		this.title();
-		this.slugField && SEO.options.hasPreview && this.slug();
-		this.desc();
+
+		// this.title();
+		// this.slugField && SEO.options.hasPreview && this.slug();
+		// this.desc();
 	}
 
 	// Initializers
 	// =========================================================================
-	
+
 	/**
 	 * Sync up the main title input with the SEO one
 	 * (if it's a new entry, or we don't have a title)
 	 */
 	async title () {
+		console.log("title");
 		this.titleObserver = new MutationObserver(this.onTitleEditableMutation);
 		this._observeTitleEditables();
 
@@ -73,63 +73,65 @@ export default class Snippet {
 		this._observeMainForm();
 		this._observeAllInputs();
 	}
-	
+
 	/**
 	 * Sync up the SEO slug with crafts
 	 */
 	slug () {
+		// console.log("slug");
 		const mainSlugField = document.getElementById('slug');
-		
+
 		// Skip if we don't have a slug field (i.e. the homepage)
 		if (!mainSlugField) return;
-		
+
 		const onSlugChange = () => {
 			this.slugField.textContent = mainSlugField.value;
 		};
-		
+
 		mainSlugField.addEventListener('input', onSlugChange);
-		
+
 		// Slug generation has a debounce that we need to account for to keep
 		// the slugs in sync
 		const title = document.getElementById('title');
 		title && title.addEventListener('input', debounce(onSlugChange, 500));
-		
+
 		// Sync straight away (see above in title() as to why)
 		onSlugChange();
 	}
-	
+
 	/**
 	 * Adjust the height of the description TextArea to ensure it never scrolls,
 	 * and handle descriptions that are longer than the recommended length.
 	 */
 	desc () {
+		// console.log("desc");
 		const adjustHeight = () => {
 			setTimeout(() => {
 				this.descField.style.height = '';
 				this.descField.style.height = this.descField.scrollHeight + 'px';
 			}, 1);
 		};
-		
+
 		// Prevent line breaks
 		this.descField.addEventListener('keydown', e => {
 			if (e.keyCode === 13) e.preventDefault();
 		});
-		
+
 		// Cleanse line breaks & check length
 		this.descField.addEventListener('input', () => {
 			this.descField.value =
 				this.descField.value.replace(/(\r\n|\r|\n)/gm, ' ');
-			
+
 			if (this.descField.value.length > 313)
 				this.descField.classList.add('invalid');
 			else
 				this.descField.classList.remove('invalid');
-			
+
 			adjustHeight();
 		});
-		
+
 		// Adjust height TextArea size changes
-		
+
 		// On tab change
 		if (document.getElementById('tabs')) {
 			const tabs = document.querySelectorAll('#tabs a.tab');
@@ -137,16 +139,16 @@ export default class Snippet {
 				tabs[i].addEventListener('click', adjustHeight);
 			}
 		}
-		
+
 		// On open / close live preview
 		if (Craft.livePreview) {
 			Craft.livePreview.on('enter', adjustHeight);
 			Craft.livePreview.on('exit', adjustHeight);
 		}
-		
+
 		// On window resize
 		window.addEventListener('resize', adjustHeight);
-		
+
 		// Set initial height (extra delay to fix FF bug)
 		setTimeout(() => {
 			adjustHeight();
@@ -188,6 +190,7 @@ export default class Snippet {
 	};
 
 	onAnyChange = debounce(async (records) => {
+		// console.log("change");
 		// Skip if all changes occurred within an SEO field
 		let skip = true;
 
@@ -239,6 +242,7 @@ export default class Snippet {
 	// =========================================================================
 
 	static _getSelection (el) {
+		// console.log("get selection");
 		if (window.getSelection && document.createRange) {
 			let range = window.getSelection().getRangeAt(0);
 			let preSelectionRange = range.cloneRange();
@@ -265,6 +269,7 @@ export default class Snippet {
 	}
 
 	static _restoreSelection (el, sel) {
+		// console.log("restore selection");
 		if (window.getSelection && document.createRange) {
 			let charIndex = 0, range = document.createRange();
 			range.setStart(el, 0);
@@ -308,6 +313,7 @@ export default class Snippet {
 	}
 
 	async _renderTokens () {
+		// console.log("render tokens");
 		return new Promise(resolve => {
 			const fields = $(this.mainForm).serializeArray().reduce((a, b) => {
 				a[b.name] = b.value;
@@ -325,6 +331,7 @@ export default class Snippet {
 	}
 
 	_observeTitleEditables () {
+		// console.log("_observeTitleEditables");
 		const editables = this.titleField.getElementsByClassName(
 			'seo--snippet-title-editable'
 		);
@@ -339,6 +346,7 @@ export default class Snippet {
 	}
 
 	_observeMainForm () {
+		// console.log("_observeMainForm");
 		this.formObserver.observe(this.mainForm, {
 			childList: true,
 			attributes: true,
@@ -350,6 +358,7 @@ export default class Snippet {
 	}
 
 	_observeAllInputs () {
+		// console.log("_observeAllInputs");
 		// NOTE: Value changes shouldn't (I think) be detected by
 		// MutationObserver, but are in FF and Safari so this is causing a
 		// double render of the tokens. I'm leaving it in in-case those
@@ -367,6 +376,7 @@ export default class Snippet {
 	}
 
 	_unObserveAllInputs () {
+		// console.log("_unObserveAllInputs");
 		for (let i = 0, l = this._observedInputs.length; i < l; ++i) {
 			const target = this._observedInputs[i];
 			target.removeEventListener(
@@ -375,5 +385,5 @@ export default class Snippet {
 			);
 		}
 	}
-	
+
 }

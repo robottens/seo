@@ -12,17 +12,6 @@ class GetCraftQLSchema
 	{
 		$event->handled = true;
 
-		$socialObject =
-			$event->schema->createObjectType('SeoDataSocial');
-		$socialObject->addStringField('title');
-		$socialObject->addField('image')->type(VolumeInterface::class);
-		$socialObject->addStringField('description');
-
-		$socialFieldObject =
-			$event->schema->createObjectType('SeoDataSocialField');
-		$socialFieldObject->addField('twitter')->type($socialObject);
-		$socialFieldObject->addField('facebook')->type($socialObject);
-
 		$fieldObject =
 			$event->schema->createObjectType('SeoData');
 		$fieldObject->addStringField('title');

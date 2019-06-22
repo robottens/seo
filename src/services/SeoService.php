@@ -15,53 +15,6 @@ use ether\seo\Seo;
 class SeoService extends Component
 {
 
-	// Actions
-	// =========================================================================
-
-	/**
-	 * Adds the `X-Robots-Tag` header to the request if needed.
-	 */
-	public function injectRobots ()
-	{
-		$headers = \Craft::$app->getResponse()->getHeaders();
-
-		// If devMode always noindex
-		if (\Craft::$app->config->general->devMode)
-		{
-			$headers->set('x-robots-tag', 'none, noimageindex');
-			return;
-		}
-
-		list($field, $element) = $this->_getElementAndSeoFields();
-
-		// Robots
-		$robots = $field->robots;
-
-		if ($robots !== null)
-			$headers->set('x-robots-tag', $robots);
-
-		// Get Expiry Date
-		/** @var \DateTime $expiry */
-		if (isset($element->expiryDate))
-			$expiry = $element->expiryDate->format(\DATE_RFC850);
-		else
-			$expiry = null;
-
-		// If we've got an expiry time, add an additional header
-		if ($expiry)
-			$headers->add('x-robots-tag', 'unavailable_after: ' . $expiry);
-	}
-
-	public function injectCanonical ()
-	{
-		list($field) = $this->_getElementAndSeoFields();
-
-		\Craft::$app->getResponse()->getHeaders()->add(
-			'Link',
-			'<' . $field->canonical . '>; rel="canonical"'
-		);
-	}
-
 	// Helpers
 	// =========================================================================
 

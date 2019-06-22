@@ -26,6 +26,7 @@ export default class KeywordChecklist {
 	ratingOccurrence = {};
 
 	content = null;
+	desc = null;
 	text = null;
 	stats = null;
 
@@ -50,13 +51,14 @@ export default class KeywordChecklist {
 	 * @param {Function} onNewRating
 	 */
 	calculate (keyword, onNewRating) {
+		// console.log("calculate");
 		EntryMarkup.update(this.SEO).then(content => {
 			this.ratings = [];
 			this.keyword = keyword;
 			this.keywordLower = keyword.toLowerCase();
 
 			// Remove line breaks, tabs, and surplus spaces from page text
-			this.text = content.textContent.replace(
+			this.text = content.body.querySelector("article.uk-article").textContent.replace(
 				/(\r\n|\r|\n|\t+)/gmi,
 				''
 			);
@@ -75,7 +77,8 @@ export default class KeywordChecklist {
 				return;
 			}
 
-			this.content = content;
+			this.content = content.body;
+			this.desc = content.head.querySelector("meta[name=description]").content;
 			this.stats = new TextStatistics(this.text);
 
 			// Run all `judge` functions
@@ -199,7 +202,7 @@ export default class KeywordChecklist {
 	 * Judge the length of the title
 	 */
 	judgeTitleLength () {
-		const l = this.SEO.snippetFields.title.textContent.trim().length;
+		const l = this.SEO.snippetFields.title.value.trim().length;
 
 		this.addRating(
 			l < 40 || l > 60 ? SEO_RATING.POOR : SEO_RATING.GOOD,
@@ -215,7 +218,7 @@ export default class KeywordChecklist {
 	 * Judge the positioning of the keyword in the title
 	 */
 	judgeTitleKeyword () {
-		const title = this.SEO.snippetFields.title.textContent.trim();
+		const title = this.SEO.snippetFields.title.value.trim();
 		const index = title.toLowerCase().indexOf(this.keywordLower);
 
 		if (index > -1) {
@@ -247,7 +250,7 @@ export default class KeywordChecklist {
 		if (!this.SEO.snippetFields.slug)
 			return;
 
-		const slug = this.SEO.snippetFields.slug.textContent.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+		const slug = this.SEO.snippetFields.slug.value.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
 		const keyword = this.keywordLower.replace(/[^a-zA-Z0-9]/g, '');
 
 		if (slug.indexOf(keyword) > -1) {
@@ -270,7 +273,7 @@ export default class KeywordChecklist {
 	 * TODO: Check if keyword appears in first half / appearance count
 	 */
 	judgeDesc () {
-		const desc = this.SEO.snippetFields.desc.value.toLowerCase();
+		const desc = this.desc.toLowerCase();
 
 		if (desc.indexOf(this.keywordLower) > -1) {
 			this.addRating(
@@ -310,7 +313,7 @@ export default class KeywordChecklist {
 	 * Judge keyword in first paragraph
 	 */
 	judgeFirstParagraph () {
-		const p = this.content.querySelector('p');
+		const p = this.content.querySelector('.uk-article-lead');
 
 		if (p && p.textContent.toLowerCase().indexOf(this.keywordLower) > -1) {
 			this.addRating(
@@ -332,7 +335,7 @@ export default class KeywordChecklist {
 	 * TODO: Look into <picture> & <figure> tag effect on SEO
 	 */
 	judgeImages () {
-		const imgs = this.content.getElementsByTagName('img');
+		const imgs = this.content.querySelector("article.uk-article").getElementsByTagName('img');
 
 		if (!imgs.length) return;
 
@@ -373,7 +376,7 @@ export default class KeywordChecklist {
 	 * TODO: Should this be counting instead just seeing if one exists?
 	 */
 	judgeLinks () {
-		const a = this.content.getElementsByTagName('a');
+		const a = this.content.querySelector("article.uk-article").getElementsByTagName('a');
 
 		if (!a.length) return;
 
