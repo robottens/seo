@@ -2,7 +2,7 @@
   "name": "refinery89/seo",
   "license": "MIT",
   "description": "SEO utilities including a unique field type, sitemap, & redirect manager",
-  "version": "custom",
+  "version": "de-custom",
   "type": "craft-plugin",
   "minimum-stability": "dev",
   "require": {
